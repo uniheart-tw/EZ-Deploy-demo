@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>麻X茶坊｜線上點餐</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='12' fill='%23F8F5EE'/%3E%3Ctext x='50' y='56' font-size='44' text-anchor='middle' fill='%23333' font-family='sans-serif'%3E%E8%8C%B6%3C/text%3E%3C/svg%3E">
+  <style>
+    :root{--brand:#2b8a7e;--muted:#667085;--bg:#fbfcfd;--card:#fff}
+    html{font-family:system-ui,-apple-system,'Segoe UI',Roboto,'Noto Sans TC',sans-serif;background:var(--bg);color:#0f1724}
+    *{box-sizing:border-box}:focus{outline:3px solid #CFF6EF;outline-offset:2px}
+    .container{max-width:920px;margin:0 auto;padding:16px}
+    header{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+    .brand{display:flex;flex-direction:column}
+    h1{font-size:1.125rem;margin:0}
+    p.lead{margin:0;color:var(--muted);font-size:.95rem}
+    main{display:grid;grid-template-columns:1fr;gap:12px}
+    .grid{display:grid;grid-template-columns:1fr;gap:12px}
+    .card{background:var(--card);padding:12px;border-radius:12px;box-shadow:0 1px 0 rgba(15,23,36,.04)}
+    .menu-item{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px;border-bottom:1px solid #f1f5f9}
+    .menu-item:last-child{border-bottom:0}
+    .menu-info{flex:1}
+    .menu-row{display:flex;gap:12px;align-items:center}
+    .menu-thumb img{width:96px;height:72px;object-fit:cover;border-radius:8px;box-shadow:0 4px 10px rgba(11,107,97,.06)}
+    .menu-title{font-size:1rem}
+    .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    select,input[type=number]{padding:8px;border-radius:8px;border:1px solid #e6eef0}
+    button{background:var(--brand);color:#fff;padding:10px 14px;border-radius:10px;border:0;min-height:44px}
+    button.secondary{background:#eef7f6;color:var(--brand);border:1px solid rgba(43,138,126,.12)}
+    .cart{position:sticky;top:12px}
+    .cart-list{max-height:320px;overflow:auto}
+    .muted{color:var(--muted);font-size:.9rem}
+    .form-row{display:flex;gap:8px;flex-direction:column}
+    @media(min-width:800px){main{grid-template-columns:2fr 1fr}.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div style="width:56px;height:56px;border-radius:10px;background:linear-gradient(180deg,#fff,#f1fffb);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--brand)">麻X</div>
+      <div class="brand">
+        <h1>麻X茶坊</h1>
+        <p class="lead">清新手作飲品 • 提前線上客製與取餐</p>
+      </div>
+    </header>
+
+    <main>
+      <section class="card" aria-labelledby="menuHeading">
+        <h2 id="menuHeading">菜單</h2>
+        <p class="muted">選擇飲品、甜度、冰量與加料後加入購物車。</p>
+
+        <div id="menu" class="grid" role="list"></div>
+      </section>
+
+      <aside class="card cart" aria-labelledby="cartHeading">
+        <h2 id="cartHeading">購物車</h2>
+        <div id="cartList" class="cart-list"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+          <div class="muted">小計</div>
+          <div id="subtotal">NT$0</div>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button id="checkoutBtn">前往結帳</button>
+          <button id="clearBtn" class="secondary">清空</button>
+        </div>
+      </aside>
+
+      <section id="checkoutSection" class="card" style="display:none">
+        <h2>填寫取餐資訊</h2>
+        <form id="orderForm">
+          <div class="form-row">
+            <label>姓名（必填）<input name="customer_name" required aria-required="true"></label>
+            <label>Email（必填）<input name="customer_email" type="email" required></label>
+            <label>手機（必填）<input name="customer_phone" required pattern="09[0-9]{8}" placeholder="09xxxxxxxx"></label>
+          </div>
+          <div style="margin-top:8px">
+            <label>取餐方式（必選）
+              <select name="pickup_method" required>
+                <option value="店內取餐">店內取餐</option>
+                <option value="外帶">外帶</option>
+              </select>
+            </label>
+          </div>
+          <div style="margin-top:8px">
+            <label>備註（選填）<textarea name="notes" rows="3" placeholder="例如：不加蔗糖、近窗座位等"></textarea></label>
+          </div>
+
+          <div style="margin-top:10px">
+            <h3>訂單摘要</h3>
+            <div id="orderSummary" style="border-radius:8px;padding:8px;background:#fbfffe"></div>
+          </div>
+
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button type="submit" id="submitBtn">確認並寄送訂單</button>
+            <button type="button" id="backBtn" class="secondary">返回修改</button>
+          </div>
+          <div id="formMsg" class="muted" style="margin-top:8px"></div>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <script>
+  // CONFIG 必須置頂且集中
+  const CONFIG = {
+    API_BASE: 'https://dev-ai-works.uniheart-ai.com',
+    SITE_KEY: 'sk_pub_9tvpxpg22imoxo9l',
+    TEMPLATE_ID: 'drink_order_confirmation',
+    STORE_NAME: '麻X茶坊'
+  };
+
+  // 商品資料（至少 6 款）
+  const MENU = [
+    {id:'m1',name:'香柚綠茶',desc:'清香柚皮與綠茶，微酸天然',price:65},
+    {id:'m2',name:'烏龍奶蓋',desc:'微焙烏龍搭配鹹香奶蓋',price:75},
+    {id:'m3',name:'蜜香紅茶',desc:'經典蜜香，順口回甘',price:55},
+    {id:'m4',name:'桂花青蘆薈',desc:'桂花香氣與清爽蘆薈',price:80},
+    {id:'m5',name:'黑糖珍珠鮮奶',desc:'手工黑糖與Q彈珍珠',price:95},
+    {id:'m6',name:'檸檬寒天',desc:'檸檬清爽搭配寒天口感',price:70}
+  ];
+
+  const ADDONS = ['珍珠','椰果','仙草'];
+  const SWEETNESS = ['無糖','微糖','半糖','少糖','正常甜'];
+  const ICE = ['去冰','少冰','微冰','正常冰','熱飲'];
+
+  // state
+  let cart = [];
+
+  function $(s){return document.querySelector(s)}
+  function createMenu(){
+    const el = $('#menu');
+    const COLORS = ['#FFF7ED','#F0FFF4','#EFF6FF','#FFF1F2','#F8FAFC','#FFFBEB'];
+    const svgDataUrl = (name,color)=>{
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='480' height='360'><rect rx='18' width='100%' height='100%' fill='${color}'/><text x='50%' y='54%' dominant-baseline='middle' text-anchor='middle' font-family='Noto Sans TC, Arial, sans-serif' font-size='28' fill='#0b6b61'>${escapeHtml(name)}</text></svg>`;
+      return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+    };
+
+    MENU.forEach((item,i)=>{
+      const imgSrc = svgDataUrl(item.name, COLORS[i % COLORS.length]);
+      const node = document.createElement('div'); node.className='card';
+      node.innerHTML = `
+        <div class="menu-item" role="listitem">
+          <div class="menu-row">
+            <div class="menu-thumb"><img src="${imgSrc}" alt="${escapeHtml(item.name)}"></div>
+            <div class="menu-info">
+              <div class="menu-title" style="font-weight:700">${escapeHtml(item.name)}</div>
+              <div class="muted">${escapeHtml(item.desc)}</div>
+              <div style="margin-top:6px">NT$${item.price}</div>
+            </div>
+          </div>
+          <div class="controls">
+            <div>
+              <label>甜度<select data-id="${item.id}" class="selSweet">${SWEETNESS.map(s=>`<option>${s}</option>`).join('')}</select></label>
+            </div>
+            <div>
+              <label>冰量<select class="selIce">${ICE.map(s=>`<option>${s}</option>`).join('')}</select></label>
+            </div>
+            <div>
+              <label>加料<select class="selAddon"><option value="">無</option>${ADDONS.map(a=>`<option>${a}</option>`).join('')}</select></label>
+            </div>
+            <div>
+              <label>數量<input type="number" class="qty" value="1" min="1" style="width:64px"></label>
+            </div>
+            <div><button class="addBtn">加入</button></div>
+          </div>
+        </div>`;
+      el.appendChild(node);
+    });
+
+    // attach listeners
+    document.querySelectorAll('.addBtn').forEach((btn,i)=>{
+      btn.addEventListener('click',()=>{
+        const card = btn.closest('.menu-item');
+        const idx = i; const item = MENU[idx];
+        const sweet = card.querySelector('.selSweet').value;
+        const ice = card.querySelector('.selIce').value;
+        const addon = card.querySelector('.selAddon').value;
+        const qty = Number(card.querySelector('.qty').value)||1;
+        addToCart(item,qty,sweet,ice,addon);
+      });
+    });
+  }
+
+  function addToCart(item,qty,sweet,ice,addon){
+    const key = JSON.stringify({id:item.id,sweet,ice,addon});
+    const exist = cart.find(c=>c.key===key);
+    if(exist){ exist.qty += qty; }
+    else{ cart.push({key, id:item.id, name:item.name, price:item.price, qty, sweet, ice, addon}); }
+    renderCart();
+  }
+
+  function renderCart(){
+    const el = $('#cartList'); el.innerHTML='';
+    let subtotal = 0;
+    cart.forEach((c,idx)=>{
+      const row = document.createElement('div'); row.style.display='flex'; row.style.justifyContent='space-between'; row.style.alignItems='center'; row.style.padding='6px 0';
+      const left = document.createElement('div'); left.innerHTML = `<div style="font-weight:700">${escapeHtml(c.name)}</div><div class="muted">${escapeHtml(c.sweet)} ・ ${escapeHtml(c.ice)} ${c.addon? '・'+escapeHtml(c.addon):''}</div>`;
+      const right = document.createElement('div');
+      right.innerHTML = `<div>NT$${c.price} × <input type="number" min="1" value="${c.qty}" data-idx="${idx}" style="width:64px"></div><div style="margin-top:6px"><button data-del="${idx}" class="secondary">刪除</button></div>`;
+      row.appendChild(left); row.appendChild(right); el.appendChild(row);
+      subtotal += c.price * c.qty;
+    });
+    $('#subtotal').textContent = `NT$${subtotal}`;
+
+    // quantity change
+    el.querySelectorAll('input[type=number]').forEach(inp=>inp.addEventListener('change',e=>{
+      const i = Number(e.target.dataset.idx); const v = Math.max(1,Number(e.target.value)||1); cart[i].qty = v; renderCart();
+    }));
+    // delete
+    el.querySelectorAll('button[data-del]').forEach(b=>b.addEventListener('click',e=>{ const i=Number(e.target.dataset.del); cart.splice(i,1); renderCart(); }));
+  }
+
+  function escapeHtml(s){return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;");}
+
+  // Checkout flow
+  $('#checkoutBtn').addEventListener('click',()=>{
+    if(cart.length===0){ alert('購物車為空'); return; }
+    $('#checkoutSection').style.display='block';
+    window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
+    updateSummary();
+  });
+  $('#clearBtn').addEventListener('click',()=>{ if(confirm('確定清空購物車？')){ cart=[]; renderCart(); } });
+  $('#backBtn').addEventListener('click',()=>{ $('#checkoutSection').style.display='none'; });
+
+  function updateSummary(){
+    const s = cart.map(c=>`<div>${escapeHtml(c.name)} ${c.addon?'/'+escapeHtml(c.addon):''} ${escapeHtml(c.sweet)} ${escapeHtml(c.ice)} × ${c.qty} = NT$${c.price*c.qty}</div>`).join('');
+    const subtotal = cart.reduce((a,c)=>a + c.price*c.qty,0);
+    $('#orderSummary').innerHTML = s + `<div style="margin-top:6px;font-weight:700">總計 NT$${subtotal}</div>`;
+  }
+
+  // form submit
+  $('#orderForm').addEventListener('submit',async e=>{
+    e.preventDefault();
+    if(!validateForm()) return;
+    // prepare payload
+    const form = new FormData(e.target);
+    const variables = buildVariables(form);
+    // API config checks
+    if(!isDeployed()){
+      $('#formMsg').textContent = '尚未完成部署設定'; return;
+    }
+    disableSubmit(true);
+    try{
+      const res = await fetch(`${CONFIG.API_BASE.replace(/\/+$/,'')}/api/email/notify`,{
+        method:'POST',headers:{'X-Site-Key':CONFIG.SITE_KEY,'Content-Type':'application/json'},
+        body:JSON.stringify({template_id:CONFIG.TEMPLATE_ID,to:variables.customer_email,variables})
+      });
+      const json = await safeJson(res);
+      if(!res.ok){ handleApiError(json); disableSubmit(false); return; }
+      // success
+      $('#formMsg').textContent = `訂單已建立：${variables.order_id}`;
+      cart = [];
+      renderCart();
+      $('#checkoutSection').style.display='none';
+      alert('訂單已送出，確認信將寄至 ' + variables.customer_email);
+    }catch(err){
+      $('#formMsg').textContent = '寄送失敗，請稍後重試'; disableSubmit(false);
+    }
+  });
+
+  function validateForm(){
+    const f = document.getElementById('orderForm');
+    if(cart.length===0){ alert('購物車為空'); return false; }
+    const cname = f.customer_name.value.trim(); if(!cname){ alert('請填寫姓名'); return false; }
+    const email = f.customer_email.value.trim(); if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ alert('請輸入正確 Email'); return false; }
+    const phone = f.customer_phone.value.trim(); if(!/^09\d{8}$/.test(phone)){ alert('請填寫正確手機（09xxxxxxxx）'); return false; }
+    updateSummary(); return true;
+  }
+
+  function buildVariables(form){
+    const vars = {};
+    vars.store_name = escapeHtml(CONFIG.STORE_NAME);
+    vars.customer_name = escapeHtml(form.get('customer_name'));
+    vars.customer_email = form.get('customer_email');
+    vars.customer_phone = escapeHtml(form.get('customer_phone'));
+    vars.pickup_method = escapeHtml(form.get('pickup_method'));
+    vars.notes = escapeHtml(form.get('notes')||'');
+    vars.order_id = `ORD-${Date.now().toString().slice(-8)}-${Math.floor(Math.random()*900+100)}`;
+    const subtotal = cart.reduce((a,c)=>a + c.price*c.qty,0);
+    vars.total = `NT$${subtotal}`;
+    // items_html must be generated safely
+    const rows = cart.map(c=>`<tr><td style="padding:6px;border-bottom:1px solid #eee">${escapeHtml(c.name)}${c.addon? ' / '+escapeHtml(c.addon):''}</td><td style="padding:6px;border-bottom:1px solid #eee">${escapeHtml(c.qty.toString())}</td><td style="padding:6px;border-bottom:1px solid #eee">NT$${c.price*c.qty}</td></tr>`).join('');
+    vars.items_html = `<table style="width:100%;border-collapse:collapse">${rows}<tr><td style="padding:6px;font-weight:700">總計</td><td></td><td style="padding:6px;font-weight:700">${vars.total}</td></tr></table>`;
+    return vars;
+  }
+
+  function isDeployed(){
+    if(!CONFIG.API_BASE || CONFIG.API_BASE.includes('[EZ-DEPLOY')) return false;
+    if(!CONFIG.SITE_KEY || !CONFIG.SITE_KEY.startsWith('sk_pub_')) return false;
+    if(!CONFIG.TEMPLATE_ID) return false;
+    return true;
+  }
+
+  async function safeJson(res){
+    try{return await res.json();}catch(e){return {error:res.statusText||'non-json response'}}
+  }
+
+  function handleApiError(json){
+    const code = (json && json.code) || (json.error && json.error.code) || null;
+    const map = {
+      INVALID_SITE_KEY:'X-Site-Key 無效，請檢查 SITE_KEY',
+      ORIGIN_NOT_ALLOWED:'部署網域不被允許（ORIGIN_NOT_ALLOWED），請確認 Referer 與部署路徑',
+      TENANT_MISMATCH:'組織路徑與 Site Key 不符（TENANT_MISMATCH），請檢查 org 設定',
+      NOT_FOUND:'Template 未找到（NOT_FOUND），請確認 TEMPLATE_ID 是否已上傳',
+      EMAIL_QUOTA_EXCEEDED:'寄信額度已達上限',
+      RATE_LIMITED:'請求過於頻繁，稍後再試',
+      SITE_DISABLED:'網站被停用',
+      SITE_SUSPENDED:'網站被暫停'
+    };
+    const msg = map[code] || json.error || JSON.stringify(json);
+    $('#formMsg').textContent = msg;
+  }
+
+  function disableSubmit(v){ $('#submitBtn').disabled = v; $('#submitBtn').textContent = v? '寄送中...' : '確認並寄送訂單'; }
+
+  // init
+  createMenu(); renderCart();
+  </script>
+</body>
+</html>

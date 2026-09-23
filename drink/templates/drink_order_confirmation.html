@@ -1,0 +1,53 @@
+<!-- SUBJECT -->
+麻X茶坊｜您的訂單已收到
+<!-- /SUBJECT -->
+
+<!-- BODY -->
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body{margin:0;padding:0;background:#f6fbfa;color:#0f1724;font-family:Helvetica,Arial,sans-serif}
+    .wrap{max-width:600px;margin:0 auto;padding:16px}
+    .card{background:#ffffff;border-radius:8px;padding:16px}
+    .muted{color:#667085;font-size:13px}
+    table{width:100%;border-collapse:collapse}
+    @media(max-width:480px){.wrap{padding:12px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1 style="margin:0 0 6px 0;color:#0b6b61">{store_name}</h1>
+      <p class="muted" style="margin:0 0 12px 0">感謝您的訂單，我們已收到您的需求。</p>
+
+      <h2 style="font-size:16px;margin:8px 0">訂單資訊</h2>
+      <table role="presentation">
+        <tr><td style="padding:6px;border-top:1px solid #eef2f2;width:40%">訂單編號</td><td style="padding:6px;border-top:1px solid #eef2f2">{order_id}</td></tr>
+        <tr><td style="padding:6px;border-top:1px solid #eef2f2">取餐方式</td><td style="padding:6px;border-top:1px solid #eef2f2">{pickup_method}</td></tr>
+        <tr><td style="padding:6px;border-top:1px solid #eef2f2">備註</td><td style="padding:6px;border-top:1px solid #eef2f2">{notes}</td></tr>
+      </table>
+
+      <h3 style="font-size:15px;margin:12px 0 6px 0">商品明細</h3>
+      <div style="margin-bottom:12px">{items_html}</div>
+
+      <table role="presentation">
+        <tr><td style="padding:6px;border-top:1px solid #eef2f2">總額</td><td style="padding:6px;border-top:1px solid #eef2f2">{total}</td></tr>
+      </table>
+
+      <h3 style="font-size:15px;margin:12px 0 6px 0">顧客資訊</h3>
+      <table role="presentation">
+        <tr><td style="padding:6px;border-top:1px solid #eef2f2">姓名</td><td style="padding:6px;border-top:1px solid #eef2f2">{customer_name}</td></tr>
+        <tr><td style="padding:6px;border-top:1px solid #eef2f2">Email</td><td style="padding:6px;border-top:1px solid #eef2f2">{customer_email}</td></tr>
+        <tr><td style="padding:6px;border-top:1px solid #eef2f2">手機</td><td style="padding:6px;border-top:1px solid #eef2f2">{customer_phone}</td></tr>
+      </table>
+
+      <p class="muted" style="margin-top:14px">如需修改訂單，請回覆此信或聯絡門市人員。</p>
+    </div>
+    <p class="muted" style="text-align:center;margin-top:10px">麻X茶坊 • 原創示範內容，非正式收據</p>
+  </div>
+</body>
+</html>
+<!-- /BODY -->
