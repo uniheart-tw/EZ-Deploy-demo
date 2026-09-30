@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>丹X漢堡店｜線上點餐</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 700px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f8f8f8;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .product,
+    .order {
+      background: white;
+      padding: 16px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+    }
+
+    .product {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    button {
+      padding: 8px 16px;
+      cursor: pointer;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0 16px;
+      box-sizing: border-box;
+    }
+
+    #total {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    #message {
+      margin-top: 20px;
+      padding: 12px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>🍔 丹X漢堡店</h1>
+
+  <!-- 客戶資料 -->
+  <div class="order">
+    <label>
+      客戶姓名
+      <input
+        type="text"
+        id="customer-name"
+        placeholder="請輸入姓名"
+      >
+    </label>
+
+    <label>
+      Email
+      <input
+        type="email"
+        id="customer-email"
+        placeholder="example@mail.com"
+      >
+    </label>
+  </div>
+
+  <!-- 餐點 -->
+  <h2>選擇餐點</h2>
+
+  <div class="product">
+    <div>
+      <strong>鮮脆雞腿堡</strong>
+      <br>
+      NT$95
+    </div>
+
+    <button onclick="addItem('鮮脆雞腿堡', 95)">
+      加入
+    </button>
+  </div>
+
+  <div class="product">
+    <div>
+      <strong>雙霸牛肉堡</strong>
+      <br>
+      NT$130
+    </div>
+
+    <button onclick="addItem('雙霸牛肉堡', 130)">
+      加入
+    </button>
+  </div>
+
+  <div class="product">
+    <div>
+      <strong>薯條</strong>
+      <br>
+      NT$50
+    </div>
+
+    <button onclick="addItem('薯條', 50)">
+      加入
+    </button>
+  </div>
+
+  <!-- 訂單 -->
+  <h2>目前訂單</h2>
+
+  <div class="order">
+    <div id="order-items">
+      尚未選擇餐點
+    </div>
+
+    <p id="total">
+      總額：NT$0
+    </p>
+  </div>
+
+  <button
+    style="width:100%;"
+    onclick="sendOrder()"
+  >
+    確認訂單並寄送 Email
+  </button>
+
+  <div id="message"></div>
+
+
+  <script>
+
+    /*
+     * Email API 設定
+     */
+    const CONFIG = {
+      API_BASE: 'https://ai-works.uniheart-ai.com',
+      SITE_KEY: 'sk_pub_xxxx',
+      TEMPLATE_ID: 'test_email'
+    };
+
+
+    /*
+     * 購物車
+     */
+    let cart = [];
+
+
+    /*
+     * 加入餐點
+     */
+    function addItem(name, price) {
+
+      const existing = cart.find(
+        item => item.name === name
+      );
+
+      if (existing) {
+        existing.qty += 1;
+      } else {
+        cart.push({
+          name: name,
+          price: price,
+          qty: 1
+        });
+      }
+
+      updateOrder();
+    }
+
+
+    /*
+     * 更新畫面上的訂單
+     */
+    function updateOrder() {
+
+      const container =
+        document.getElementById('order-items');
+
+      if (cart.length === 0) {
+        container.innerHTML = '尚未選擇餐點';
+
+        document.getElementById('total').innerText =
+          '總額：NT$0';
+
+        return;
+      }
+
+      let total = 0;
+
+      const html = cart.map(item => {
+
+        const subtotal =
+          item.price * item.qty;
+
+        total += subtotal;
+
+        return `
+          <p>
+            ${item.name}
+            × ${item.qty}
+           　NT$${subtotal}
+          </p>
+        `;
+
+      }).join('');
+
+      container.innerHTML = html;
+
+      document.getElementById('total').innerText =
+        `總額：NT$${total}`;
+    }
+
+
+    /*
+     * 建立訂單編號
+     */
+    function generateOrderId() {
+
+      const date =
+        new Date()
+          .toISOString()
+          .slice(0, 10)
+          .replace(/-/g, '');
+
+      const random =
+        Math.floor(1000 + Math.random() * 9000);
+
+      return `DX-${date}-${random}`;
+    }
+
+
+    /*
+     * 送出訂單
+     */
+    async function sendOrder() {
+
+      const customerName =
+        document.getElementById('customer-name').value.trim();
+
+      const customerEmail =
+        document.getElementById('customer-email').value.trim();
+
+      if (!customerName) {
+        alert('請輸入姓名');
+        return;
+      }
+
+      if (!customerEmail) {
+        alert('請輸入 Email');
+        return;
+      }
+
+      if (cart.length === 0) {
+        alert('請至少選擇一項餐點');
+        return;
+      }
+
+
+      /*
+       * 建立 order_id
+       */
+      const orderId = generateOrderId();
+
+
+      /*
+       * 計算總額
+       */
+      const totalAmount = cart.reduce(
+        (sum, item) =>
+          sum + item.price * item.qty,
+        0
+      );
+
+
+      /*
+       * 將購物車轉成 Email HTML
+       *
+       * Email Template 中：
+       *
+       * <table>
+       *   <tbody>
+       *     {items_html}
+       *   </tbody>
+       * </table>
+       *
+       * 因此這裡每一筆資料要產生一個 <tr>。
+       */
+      const itemsHtml = cart.map(item => {
+
+        const subtotal =
+          item.price * item.qty;
+
+        return `
+          <tr>
+            <td>${item.name}</td>
+            <td>${item.qty}</td>
+            <td>NT$${item.price}</td>
+            <td>NT$${subtotal}</td>
+          </tr>
+        `;
+
+      }).join('');
+
+
+      /*
+       * 對應 Email Template 的四個 Variables
+       *
+       * {order_id}
+       * {customer_name}
+       * {items_html}
+       * {total}
+       */
+      const payload = {
+
+        template_id: CONFIG.TEMPLATE_ID,
+
+        to: customerEmail,
+
+        variables: {
+
+          order_id: orderId,
+
+          customer_name: customerName,
+
+          items_html: itemsHtml,
+
+          total: `NT$${totalAmount}`
+
+        }
+
+      };
+
+
+      try {
+
+        const cleanApiBase =
+          CONFIG.API_BASE.replace(/\/+$/, '');
+
+
+        /*
+         * 呼叫 Email API
+         */
+        const response = await fetch(
+          `${cleanApiBase}/api/email/notify`,
+          {
+            method: 'POST',
+
+            headers: {
+              'X-Site-Key': CONFIG.SITE_KEY,
+              'Content-Type': 'application/json'
+            },
+
+            body: JSON.stringify(payload)
+          }
+        );
+
+
+        const result =
+          await response.json();
+
+
+        if (response.ok) {
+
+          document.getElementById('message').innerText =
+            `訂單成功送出！
+             訂單編號：${orderId}
+             確認信已寄送至 ${customerEmail}`;
+
+          cart = [];
+
+          updateOrder();
+
+        } else {
+
+          document.getElementById('message').innerText =
+            `訂單送出失敗：
+             ${result.message || result.code || 'Unknown error'}`;
+
+        }
+
+      } catch (error) {
+
+        document.getElementById('message').innerText =
+          '無法連線到 Email API，請稍後再試。';
+
+        console.error(error);
+      }
+    }
+
+  </script>
+
+</body>
+</html>

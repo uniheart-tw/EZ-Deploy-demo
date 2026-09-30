@@ -1,0 +1,2 @@
+.env.local
+.env.owner[0-9]*

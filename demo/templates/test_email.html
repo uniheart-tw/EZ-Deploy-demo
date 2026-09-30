@@ -1,0 +1,39 @@
+<!-- SUBJECT -->
+訂單確認 - {order_id}
+<!-- /SUBJECT -->
+
+<!-- BODY -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>訂單確認</title>
+</head>
+
+<body>
+  <h1>您好，{customer_name}</h1>
+  <p>訂單編號：{order_id}</p>
+  <h2>訂單明細</h2>
+  <table
+      width="100%"
+      cellpadding="8"
+      cellspacing="0"
+      style="border-collapse: collapse;"
+    >
+      <thead>
+        <tr>
+          <th>品項</th>
+          <th>數量</th>
+          <th>單價</th>
+          <th>小計</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {items_html}
+      </tbody>
+    </table>
+  <p>訂單總額：{total}</p>
+</body>
+</html>
+<!-- /BODY -->
