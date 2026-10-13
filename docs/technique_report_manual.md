@@ -177,7 +177,7 @@ cp .env.local.example .env.local
 得到下面的內容：
 ```bash
 # .env.local
-export API_BASE="https://ai-works.uniheart-ai.com/"
+export API_BASE="https://ai-works.uniheart.com.tw/"
 export SITE_KEY="sk_pub_xxxxxxxxx" #替換成自己的
 export API_KEY="api_key_xxxxxxxxx" #替換成自己的
 ```
@@ -472,7 +472,7 @@ API 實際接收到的 JSON 範例會是：
 ### 5.4 前端 CONFIG 設定檔作用
 ```html
 const CONFIG = {
-  API_BASE: 'https://ai-works.uniheart-ai.com',
+  API_BASE: 'https://ai-works.uniheart.com.tw',
   SITE_KEY: 'sk_pub_xxxxxx',
   TEMPLATE_ID: 'test_email',
 };
@@ -497,7 +497,7 @@ curl -i "$API_BASE/api/email/notify" \
   -X POST \
   -H "Content-Type: application/json" \
   -H "X-Site-Key: $SITE_KEY" \
-  -H "Origin: https://ai-works.uniheart-ai.com/" \
+  -H "Origin: https://ai-works.uniheart.com.tw/" \
   -H "Referer: https://your-test-site.example/..." \
   -d '{
     "template_id": "test_order",

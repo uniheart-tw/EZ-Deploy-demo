@@ -97,11 +97,22 @@ EZ-Deploy-demo/
 | `demo/templates/test_email.html` | Email Template 範例 |
 | `demo/test_order.html` | demo 系統前端 |
 
-### 2.3 開啟管理網頁
+### 2.3 將管理網頁部署到 EZ-Deploy 並分享
 
-直接用瀏覽器打開 `demo/template_manage.html` 即可（滑鼠雙擊，或拖進瀏覽器視窗）。
+> ⚠️ **不要直接用瀏覽器打開本機檔案（`file://`）。**
+> 管理網頁是從瀏覽器直接呼叫 Email API，API 會檢查請求的來源（Origin / Referer）。若用 `file://` 或任意本機伺服器開啟，來源不被允許，會被擋下而出現錯誤（CORS / `TENANT_MISMATCH` 之類），**不是金鑰的問題**。
+>
+> 正確做法：把 `demo/template_manage.html` **上傳到 EZ-Deploy 並分享**，從 EZ-Deploy 產生的網址開啟，瀏覽器才會帶上被允許的來源。
 
-網頁一開啟就會看到：
+部署步驟：
+
+1. 登入 EZ-Deploy，上傳 `demo/template_manage.html`（和上傳 `test_order.html` 這類系統 HTML 的方式相同）。
+2. 在系統列表找到剛上傳的管理網頁，點「分享」。
+3. 設定分享方式與天數後，取得短網址 / QR Code。
+4. 用該短網址開啟管理網頁。
+![alt text](/imgs/gui-verify-01.png)
+
+從 EZ-Deploy 分享網址開啟後，網頁上會看到：
 
 1. **① 憑證設定**：填入 `API_BASE`、`SITE_KEY`、`API_KEY`。
 2. 四個分頁：**列出 / 驗證**、**查看單一**、**上傳 / 更新**、**刪除**。
@@ -124,9 +135,20 @@ export API_KEY="api_key_xxxxxxxxx"
 
 | 網頁欄位 | 對應 `.env.local` | 說明 |
 | --- | --- | --- |
-| `API_BASE` | `API_BASE` | API Server 網域，例如 `https://ai-works.uniheart-ai.com`（結尾斜線會自動去除） |
+| `API_BASE` | `API_BASE` | **填入目前開啟這個管理網頁的主機名稱**（見下方特別注意），結尾斜線會自動去除 |
 | `SITE_KEY` | `SITE_KEY` | 網站金鑰 |
 | `API_KEY` | `API_KEY` | API 金鑰（管理 Template 用的私密憑證） |
+
+> ⚠️ **特別注意：`API_BASE` 要填「當前主機名稱」**
+>
+> 因為網頁已經是從 EZ-Deploy 分享網址開啟（見 2.3），`API_BASE` 要填**目前瀏覽器網址列上的主機**，也就是這個管理網頁正在運行的主機，API 的來源檢查才會通過。
+>
+> 例如網址列是 `https://your-host.example/s/xxxx` 時，`API_BASE` 就填 `https://your-host.example`（只要協定 + 主機，不含後面的路徑）。
+>
+> 若填成與當前主機不同的網域（例如硬寫某個固定網域），瀏覽器的來源 / CORS 檢查會失敗，出現連線錯誤。
+>
+> **若使用自定域名（Custom Domain）：** `API_BASE` 一樣填目前網址列上的那個自定域名即可，規則不變——當前主機是什麼就填什麼。下圖即為使用自定域名開啟管理網頁的範例：
+> ![alt text](/imgs/gui-verify-02.png)
 
 勾選欄位旁的「顯示」可以暫時看到金鑰明碼以便核對；按「清除憑證」會立即把 `SITE_KEY` / `API_KEY` 清空。
 
@@ -241,7 +263,7 @@ bash template_manage.sh list
 <!-- /BODY -->
 ```
 
-### 4.2 定義變數白名單（Allowed Variables）
+### 4.2 定義變數（Allowed Variables）
 
 在主旨與內文中，使用大括號 `{variable_name}` 作為動態資料的預留位置（Placeholder）。範例中定義了四個變數：
 
@@ -403,7 +425,7 @@ API 實際接收到的 JSON 範例會是：
 
 ```html
 const CONFIG = {
-  API_BASE: 'https://ai-works.uniheart-ai.com',
+  API_BASE: 'https://ai-works.uniheart.com.tw',
   SITE_KEY: 'sk_pub_xxxxxx',
   TEMPLATE_ID: 'test_email',
 };
@@ -422,26 +444,7 @@ const CONFIG = {
 
 ### 5.5 本地測試 Email Notify API
 
-在前端正式部署到 EZ-Deploy 前，可以先模擬前端 Request，確認 Email Notify API 可以正常收到請求。CLI 版使用 `curl`：
-
-```bash
-curl -i "$API_BASE/api/email/notify" \
-  -X POST \
-  -H "Content-Type: application/json" \
-  -H "X-Site-Key: $SITE_KEY" \
-  -H "Origin: https://ai-works.uniheart-ai.com/" \
-  -H "Referer: https://your-test-site.example/..." \
-  -d '{
-    "template_id": "test_order",
-    "to": "your-test-email@example.com",
-    "variables": {
-      "order_id": "TEST-001",
-      "customer_name": "王小明",
-      "items_html": "<tr><td>雞腿堡</td><td>1</td><td>NT$95</td><td>NT$95</td></tr>",
-      "total": "NT$95"
-    }
-  }'
-```
+在前端正式部署到 EZ-Deploy 前，可以先模擬前端 Request，確認 Email Notify API 可以正常收到請求。
 
 #### API 測試結果
 
@@ -455,16 +458,6 @@ curl -i "$API_BASE/api/email/notify" \
 | `403 INVALID_SITE_KEY` | Site Key 不正確 |
 | `400 MISSING_REQUIRED_FIELD` | Request 缺少必要欄位 |
 
-由於本地並不是從實際 EZ-Deploy 網頁發送請求，`Referer` 中的租戶資訊可能與 Site 不符，因此可能收到：
-
-```text
-403 TENANT_MISMATCH
-```
-![alt text](/imgs/local_test.png)
-
-這代表 API 已經收到 Request，並進入來源與租戶驗證流程（是正常的，部署 HTML 到 EZ-Deploy 不會出錯）。
-
-> **注意：** 本地測試出現 `ORIGIN_NOT_ALLOWED` 或 `TENANT_MISMATCH`，不代表正式部署後一定會失敗。正式部署到 EZ-Deploy 後，前端網頁會由瀏覽器自動帶入實際的 `Origin` / `Referer`，因此需要再從實際部署的網頁進行一次完整的 Email 發送測試。
 
 ### 5.6 Deploy 後 E2E 測試
 
@@ -627,23 +620,6 @@ Total Bounce Count > 20
 ### Q12. Email Service 被停用/暫停時，我還能管理不同系統的 Template 嗎？
 
 可以。服務停用影響的是**Email 寄送功能**，不是 Template 管理功能。即使服務目前是停用 / 暫停狀態，仍然可以用管理網頁完成 Template 的新增、修改、查看或刪除，等重新啟用 Email Service 後再恢復寄送。
-
----
-
-## CLI 版 vs 網頁版 快速對照
-
-| 操作 | CLI 版（`template_manage.sh`） | 網頁版（`template_manage.html`） |
-| --- | --- | --- |
-| 環境需求 | bash + curl + jq（Windows 需 WSL） | 只需瀏覽器 |
-| 金鑰存放 | `.env.local`（寫在檔案裡） | 當場輸入，不存檔 |
-| 寄件設定 | `.env.owner1` / `.env.owner2` ... | 上傳表單直接填 |
-| 驗證金鑰 | `bash template_manage.sh list` | 按「驗證金鑰有效性」 |
-| 列出 | `bash template_manage.sh list` | 「列出 / 驗證」分頁 |
-| 查看 | `bash template_manage.sh get <id>` | 「查看單一」分頁 |
-| 上傳 / 更新 | `bash template_manage.sh <id> <file>` | 「上傳 / 更新」分頁 |
-| 刪除 | `bash template_manage.sh --delete <id>` | 「刪除」分頁 |
-| SUBJECT/BODY 解析 | awk | 瀏覽器 JavaScript（同規則） |
-| 變數白名單 | 自動掃描 SUBJECT+BODY | 自動掃描 SUBJECT+BODY（同規則） |
 
 ---
 
