@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EZ-Deploy Email Template 管理（網頁版）</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --panel-2: #273449;
+    --border: #334155;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --accent: #38bdf8;
+    --accent-strong: #0ea5e9;
+    --ok: #22c55e;
+    --warn: #f59e0b;
+    --err: #ef4444;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC",
+      "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+  header {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, #15213a, #0f172a);
+  }
+  header h1 { margin: 0 0 6px; font-size: 20px; }
+  header p { margin: 0; color: var(--muted); font-size: 14px; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 20px; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 18px 20px;
+    margin-bottom: 20px;
+  }
+  .card h2 { margin: 0 0 4px; font-size: 16px; }
+  .card .hint { margin: 0 0 14px; color: var(--muted); font-size: 13px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
+  input[type=text], input[type=password], input[type=email], textarea, select {
+    width: 100%;
+    padding: 9px 11px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+  }
+  input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  textarea { resize: vertical; font-family: var(--mono); font-size: 13px; }
+  .row { display: flex; gap: 14px; flex-wrap: wrap; }
+  .row > div { flex: 1 1 220px; }
+  .btn {
+    appearance: none;
+    border: 1px solid var(--accent-strong);
+    background: var(--accent-strong);
+    color: #04121f;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 9px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: filter .15s ease;
+  }
+  .btn:hover { filter: brightness(1.08); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .btn.secondary {
+    background: transparent;
+    color: var(--accent);
+  }
+  .btn.danger {
+    background: transparent;
+    border-color: var(--err);
+    color: #fca5a5;
+  }
+  .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+  .tab {
+    padding: 8px 14px;
+    border-radius: 8px 8px 0 0;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .tab.active { background: var(--panel-2); color: var(--text); font-weight: 600; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .status {
+    margin-top: 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .status-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .status.ok .status-head { background: rgba(34,197,94,.14); color: #86efac; }
+  .status.err .status-head { background: rgba(239,68,68,.14); color: #fca5a5; }
+  .status.warn .status-head { background: rgba(245,158,11,.14); color: #fcd34d; }
+  .status.info .status-head { background: rgba(56,189,248,.14); color: #7dd3fc; }
+  .status-body { padding: 0; }
+  .status-explain {
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    white-space: pre-wrap;
+  }
+  pre {
+    margin: 0;
+    padding: 14px;
+    background: #0b1220;
+    color: #cbd5e1;
+    font-family: var(--mono);
+    font-size: 13px;
+    overflow: auto;
+    max-height: 420px;
+  }
+  .pill {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .vars { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .var-chip {
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: rgba(56,189,248,.12);
+    border: 1px solid rgba(56,189,248,.4);
+    color: #7dd3fc;
+  }
+  .list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-top: 8px;
+    background: var(--panel-2);
+  }
+  .list-item code { font-family: var(--mono); font-size: 13px; color: var(--text); }
+  .list-item .acts { display: flex; gap: 6px; }
+  .mini {
+    font-size: 12px;
+    padding: 5px 10px;
+    border-radius: 6px;
+  }
+  .note {
+    background: rgba(245,158,11,.08);
+    border: 1px solid rgba(245,158,11,.3);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 13px;
+    color: #fcd34d;
+    margin-bottom: 18px;
+  }
+  .note code { background: rgba(0,0,0,.3); padding: 1px 5px; border-radius: 4px; }
+  footer { color: var(--muted); font-size: 12px; text-align: center; padding: 20px; }
+  .drop {
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    cursor: pointer;
+    background: var(--panel-2);
+  }
+  .drop.drag { border-color: var(--accent); color: var(--accent); }
+  .inline-help { font-size: 12px; color: var(--muted); margin-top: 4px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>EZ-Deploy Email Template 管理（網頁版）</h1>
+  <p>對應 <code>template_manage.sh</code> 的金鑰驗證、列出、查看、刪除與上傳功能。SITE_KEY 與 API_KEY 只在這個頁面開啟時由你輸入，不會寫進網頁或儲存起來。</p>
+</header>
+
+<div class="wrap">
+
+  <div class="note">
+    🔐 <strong>安全說明：</strong>此頁面不會把 <code>SITE_KEY</code> / <code>API_KEY</code> 寫死在檔案裡，也不會自動存入瀏覽器。重新整理頁面後需要重新輸入。<br>
+    ⚠️ <strong>關於 CORS：</strong>瀏覽器直接呼叫 API 需要 API 伺服器允許跨來源請求。若遇到瀏覽器 CORS 阻擋（Failed to fetch），這是瀏覽器限制，並非金鑰錯誤；可改用 <code>template_manage.sh</code> 做 CLI 測試。
+  </div>
+
+  <!-- 憑證設定 -->
+  <div class="card">
+    <h2>① 憑證設定</h2>
+    <p class="hint">輸入 API 連線資訊。對應 <code>.env.local</code> 的 <code>API_BASE</code> / <code>SITE_KEY</code> / <code>API_KEY</code>。</p>
+    <div class="row">
+      <div>
+        <label for="apiBase">API_BASE</label>
+        <input type="text" id="apiBase" placeholder="https://ai-works.uniheart-ai.com" value="https://ai-works.uniheart-ai.com">
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label for="siteKey">SITE_KEY</label>
+        <input type="password" id="siteKey" placeholder="sk_pub_xxxxxxxx" autocomplete="off">
+        <div class="inline-help"><label style="display:inline;"><input type="checkbox" id="showSite" style="width:auto;"> 顯示</label></div>
+      </div>
+      <div>
+        <label for="apiKey">API_KEY</label>
+        <input type="password" id="apiKey" placeholder="api_key_xxxxxxxx" autocomplete="off">
+        <div class="inline-help"><label style="display:inline;"><input type="checkbox" id="showApi" style="width:auto;"> 顯示</label></div>
+      </div>
+    </div>
+    <div class="btn-group">
+      <button class="btn" id="btnVerify">驗證金鑰有效性（list）</button>
+      <button class="btn secondary" id="btnClear">清除憑證</button>
+    </div>
+    <p class="inline-help">「驗證金鑰有效性」等同 <code>bash template_manage.sh list</code>：第一次執行 data 為空但 code 為 SUCCESS，代表金鑰有效。</p>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="list">列出 / 驗證</div>
+    <div class="tab" data-tab="get">查看單一</div>
+    <div class="tab" data-tab="upload">上傳 / 更新</div>
+    <div class="tab" data-tab="delete">刪除</div>
+  </div>
+
+  <!-- LIST -->
+  <div class="panel active" id="panel-list">
+    <div class="card">
+      <h2>列出所有 Email Template</h2>
+      <p class="hint"><span class="pill">GET /api/email/template</span> 也是金鑰有效性測試。</p>
+      <div class="btn-group">
+        <button class="btn" id="btnList">列出 Templates</button>
+      </div>
+      <div id="listResult"></div>
+      <div id="listStatus"></div>
+    </div>
+  </div>
+
+  <!-- GET -->
+  <div class="panel" id="panel-get">
+    <div class="card">
+      <h2>查看單一 Template</h2>
+      <p class="hint"><span class="pill">GET /api/email/template/{id}</span></p>
+      <label for="getId">template_id</label>
+      <input type="text" id="getId" placeholder="test_email">
+      <div class="btn-group">
+        <button class="btn" id="btnGet">查看</button>
+      </div>
+      <div id="getStatus"></div>
+    </div>
+  </div>
+
+  <!-- UPLOAD -->
+  <div class="panel" id="panel-upload">
+    <div class="card">
+      <h2>上傳 / 更新 Template（upsert）</h2>
+      <p class="hint"><span class="pill">POST /api/email/template</span> 相同 template_id 會更新既有模板。</p>
+
+      <label for="upId">template_id（必填）</label>
+      <input type="text" id="upId" placeholder="test_email">
+
+      <label>Template HTML（必須含 <code>&lt;!-- SUBJECT --&gt;</code> 與 <code>&lt;!-- BODY --&gt;</code> 區塊）</label>
+      <div class="drop" id="drop">把 .html 檔拖進來，或點此選擇檔案</div>
+      <input type="file" id="fileInput" accept=".html,.htm,text/html" style="display:none;">
+      <textarea id="upHtml" rows="12" placeholder="&lt;!-- SUBJECT --&gt;&#10;訂單確認 - {order_id}&#10;&lt;!-- /SUBJECT --&gt;&#10;&#10;&lt;!-- BODY --&gt;&#10;...&#10;&lt;!-- /BODY --&gt;"></textarea>
+
+      <div id="parsePreview"></div>
+
+      <div class="row">
+        <div>
+          <label for="upFromName">from_name（選填）</label>
+          <input type="text" id="upFromName" placeholder="寄件者名稱">
+        </div>
+        <div>
+          <label for="upReplyTo">reply_to_email（選填）</label>
+          <input type="email" id="upReplyTo" placeholder="owner@example.com">
+        </div>
+      </div>
+      <label for="upOwnerEmails">owner_notify_emails（選填，逗號分隔，最多 5 筆）</label>
+      <input type="text" id="upOwnerEmails" placeholder="owner@example.com, manager@example.com">
+
+      <div class="btn-group">
+        <button class="btn secondary" id="btnParse">解析 / 預覽變數</button>
+        <button class="btn" id="btnUpload">上傳 / 更新</button>
+      </div>
+      <div id="uploadStatus"></div>
+    </div>
+  </div>
+
+  <!-- DELETE -->
+  <div class="panel" id="panel-delete">
+    <div class="card">
+      <h2>刪除 Template</h2>
+      <p class="hint"><span class="pill">DELETE /api/email/template/{id}</span></p>
+      <label for="delId">template_id</label>
+      <input type="text" id="delId" placeholder="test_email">
+      <div class="btn-group">
+        <button class="btn danger" id="btnDelete">刪除</button>
+      </div>
+      <div id="deleteStatus"></div>
+    </div>
+  </div>
+
+</div>
+
+<footer>EZ-Deploy Email Template 管理網頁版 · 憑證僅存於此頁面的記憶體中</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  // ── Helpers ─────────────────────────────────────────────
+  const $ = (id) => document.getElementById(id);
+
+  function getCreds() {
+    let base = $("apiBase").value.trim();
+    while (base.endsWith("/")) base = base.slice(0, -1);
+    return {
+      base,
+      siteKey: $("siteKey").value.trim(),
+      apiKey: $("apiKey").value.trim(),
+    };
+  }
+
+  function requireCreds(needApiKey) {
+    const c = getCreds();
+    const missing = [];
+    if (!c.base) missing.push("API_BASE");
+    if (!c.siteKey) missing.push("SITE_KEY");
+    if (needApiKey && !c.apiKey) missing.push("API_KEY");
+    if (missing.length) {
+      return { ok: false, msg: "缺少 " + missing.join("、") + "。請先在「憑證設定」填入。" };
+    }
+    return { ok: true, creds: c };
+  }
+
+  function validateTemplateId(id) {
+    if (!id) return "template_id 不可為空";
+    if (!/^[A-Za-z0-9._-]+$/.test(id)) return "template_id 只能包含英數字、句點、底線及連字號";
+    return null;
+  }
+
+  // HTTP status → 中文說明（對應手冊 3.2 判斷結果 / finish_request）
+  function explainStatus(code, body) {
+    const serverCode = body && (body.code || body.error || body.message);
+    switch (String(code)) {
+      case "200": case "201": case "204":
+        return { kind: "ok", text: "✅ 成功。金鑰有效，可以繼續操作。" };
+      case "400":
+        return { kind: "err", text: "❌ 400 Bad Request\n   - 請檢查必填欄位及 JSON 格式。" + (serverCode ? "\n   - 伺服器訊息：" + serverCode : "") };
+      case "403":
+        return { kind: "err", text: "❌ 403 Forbidden（" + (serverCode || "INVALID_API_KEY") + "）\n   - API_KEY 或 SITE_KEY 無效，無法通過驗證。\n   - 請確認「憑證設定」中的 SITE_KEY / API_KEY 是否正確。" };
+      case "404":
+        return { kind: "err", text: "❌ 404 Not Found\n   - 找不到指定的 Email Template。" };
+      case "429":
+        return { kind: "warn", text: "⚠️ 429 Too Many Requests\n   - 已超過寄送 / 請求頻率限制，請稍後再試。" };
+      default:
+        if (/^2\d\d$/.test(String(code))) return { kind: "ok", text: "✅ 成功（HTTP " + code + "）。" };
+        return { kind: "err", text: "❌ HTTP " + code + (serverCode ? "（" + serverCode + "）" : "") + "，請參考回應內容。" };
+    }
+  }
+
+  function renderStatus(targetId, { httpCode, body, raw, kind, headline, extra, networkError }) {
+    const el = $(targetId);
+    let statusKind = kind || "info";
+    let head = headline || "";
+    let explainText = extra || "";
+
+    if (networkError) {
+      statusKind = "err";
+      head = "連線失敗";
+      explainText = "❌ 無法連線到 API 或被瀏覽器 CORS 阻擋。\n   - 這通常不是金鑰錯誤。\n   - 請確認 API_BASE 正確，且 API 伺服器允許此頁面的跨來源請求。\n   - 可改用 template_manage.sh 從 CLI 測試。\n   - 細節：" + networkError;
+    } else if (httpCode != null) {
+      const ex = explainStatus(httpCode, body);
+      statusKind = ex.kind;
+      head = "HTTP " + httpCode;
+      explainText = ex.text;
+    }
+
+    let pretty = "";
+    if (body !== undefined && body !== null) {
+      try { pretty = JSON.stringify(body, null, 2); }
+      catch (e) { pretty = String(raw || ""); }
+    } else if (raw) {
+      pretty = raw;
+    } else {
+      pretty = "（回應沒有 body）";
+    }
+
+    el.innerHTML = "";
+    const box = document.createElement("div");
+    box.className = "status " + statusKind;
+
+    const h = document.createElement("div");
+    h.className = "status-head";
+    h.textContent = head;
+    box.appendChild(h);
+
+    if (!networkError) {
+      const b = document.createElement("div");
+      b.className = "status-body";
+      const pre = document.createElement("pre");
+      pre.textContent = pretty;
+      b.appendChild(pre);
+      box.appendChild(b);
+    }
+
+    if (explainText) {
+      const ex = document.createElement("div");
+      ex.className = "status-explain";
+      ex.textContent = explainText;
+      box.appendChild(ex);
+    }
+
+    el.appendChild(box);
+    return statusKind;
+  }
+
+  // 核心請求：對應 request() + finish_request()
+  async function apiRequest(method, path, payload, needApiKey) {
+    const guard = requireCreds(needApiKey);
+    if (!guard.ok) return { error: "creds", msg: guard.msg };
+    const c = guard.creds;
+
+    const headers = {
+      "X-Api-Key": c.apiKey,
+      "X-Site-Key": c.siteKey,
+    };
+    const opts = { method, headers };
+    if (payload !== undefined && payload !== null) {
+      headers["Content-Type"] = "application/json";
+      opts.body = JSON.stringify(payload);
+    }
+
+    try {
+      const res = await fetch(c.base + path, opts);
+      const text = await res.text();
+      let body = null;
+      try { body = text ? JSON.parse(text) : null; }
+      catch (e) { body = null; }
+      return { httpCode: res.status, body, raw: text };
+    } catch (e) {
+      return { networkError: e && e.message ? e.message : String(e) };
+    }
+  }
+
+  // ── SUBJECT / BODY 解析（對應 extract_block）─────────────
+  function extractBlock(html, startMarker, endMarker) {
+    const lines = html.split(/\r?\n/);
+    let grabbing = false, foundStart = false, foundEnd = false;
+    const out = [];
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed === startMarker) { foundStart = true; grabbing = true; continue; }
+      if (trimmed === endMarker) { foundEnd = true; grabbing = false; continue; }
+      if (grabbing) out.push(line);
+    }
+    if (!foundStart || !foundEnd) return null;
+    return out.join("\n");
+  }
+
+  // 掃描 {variable_name}（對應 extract_template_variables）
+  function extractVariables(text) {
+    const re = /\{([A-Za-z_][A-Za-z0-9_]*)\}/g;
+    const set = new Set();
+    let m;
+    while ((m = re.exec(text)) !== null) set.add(m[1]);
+    return Array.from(set).sort();
+  }
+
+  // 從 HTML 解析成 payload 片段。回傳 { error } 或 { subject, body, variables }
+  function parseTemplate(html) {
+    const subjectRaw = extractBlock(html, "<!-- SUBJECT -->", "<!-- /SUBJECT -->");
+    if (subjectRaw === null) return { error: "模板缺少完整的 SUBJECT 區塊（<!-- SUBJECT --> ... <!-- /SUBJECT -->，標籤需獨立成行）" };
+    const bodyRaw = extractBlock(html, "<!-- BODY -->", "<!-- /BODY -->");
+    if (bodyRaw === null) return { error: "模板缺少完整的 BODY 區塊（<!-- BODY --> ... <!-- /BODY -->，標籤需獨立成行）" };
+
+    const subject = subjectRaw.replace(/[\r\n]+/g, "").trim();
+    if (!subject) return { error: "SUBJECT 區塊不可為空" };
+    if (!bodyRaw.replace(/\s+/g, "")) return { error: "BODY 區塊不可為空" };
+
+    const variables = extractVariables(subject + "\n" + bodyRaw);
+    return { subject, body: bodyRaw, variables };
+  }
+
+  function renderParsePreview(parsed) {
+    const el = $("parsePreview");
+    el.innerHTML = "";
+    if (parsed.error) {
+      renderStatus("parsePreview", { kind: "err", headline: "解析失敗", extra: "❌ " + parsed.error });
+      return false;
+    }
+    const box = document.createElement("div");
+    box.className = "status ok";
+    const h = document.createElement("div");
+    h.className = "status-head";
+    h.textContent = "解析成功";
+    box.appendChild(h);
+
+    const b = document.createElement("div");
+    b.className = "status-explain";
+    b.innerHTML = "<strong>主旨：</strong>" +
+      parsed.subject.replace(/</g, "&lt;").replace(/>/g, "&gt;") +
+      "<br><strong>自動分析變數（allowed_variables）：</strong>";
+    const chips = document.createElement("div");
+    chips.className = "vars";
+    if (parsed.variables.length === 0) {
+      const span = document.createElement("span");
+      span.className = "var-chip";
+      span.textContent = "（無變數）";
+      chips.appendChild(span);
+    } else {
+      for (const v of parsed.variables) {
+        const span = document.createElement("span");
+        span.className = "var-chip";
+        span.textContent = "{" + v + "}";
+        chips.appendChild(span);
+      }
+    }
+    b.appendChild(chips);
+    box.appendChild(b);
+    el.appendChild(box);
+    return true;
+  }
+
+  // ── Payload 組裝（對應 build_upload_payload）───────────────
+  function buildUploadPayload() {
+    const templateId = $("upId").value.trim();
+    const idErr = validateTemplateId(templateId);
+    if (idErr) return { error: idErr };
+
+    const html = $("upHtml").value;
+    if (!html.trim()) return { error: "請貼上或選擇 Template HTML" };
+
+    const parsed = parseTemplate(html);
+    if (parsed.error) return { error: parsed.error };
+
+    const payload = {
+      template_id: templateId,
+      subject_template: parsed.subject,
+      body_html_template: parsed.body,
+      allowed_variables: parsed.variables,
+    };
+
+    const fromName = $("upFromName").value.trim();
+    if (fromName) payload.from_name = fromName;
+
+    const replyTo = $("upReplyTo").value.trim();
+    if (replyTo) payload.reply_to_email = replyTo;
+
+    const ownerRaw = $("upOwnerEmails").value.trim();
+    if (ownerRaw) {
+      const emails = ownerRaw.split(",").map((s) => s.trim()).filter(Boolean);
+      if (emails.length > 5) return { error: "owner_notify_emails 最多只能有 5 筆" };
+      if (emails.length) payload.owner_notify_emails = emails;
+    }
+
+    return { payload };
+  }
+
+  // ── List 結果渲染（含每筆的查看/刪除按鈕）────────────────
+  function renderList(result) {
+    const resultEl = $("listResult");
+    resultEl.innerHTML = "";
+    if (result.error === "creds" || result.networkError || result.httpCode == null) return;
+    if (!/^2\d\d$/.test(String(result.httpCode))) return;
+
+    const body = result.body;
+    let items = [];
+    if (Array.isArray(body)) items = body;
+    else if (body && Array.isArray(body.data)) items = body.data;
+    else if (body && Array.isArray(body.templates)) items = body.templates;
+
+    if (!items.length) {
+      const p = document.createElement("p");
+      p.className = "inline-help";
+      p.textContent = "目前沒有任何 Template（若 code 為 SUCCESS，代表金鑰有效）。";
+      resultEl.appendChild(p);
+      return;
+    }
+
+    for (const item of items) {
+      const id = typeof item === "string" ? item : (item.template_id || item.id || JSON.stringify(item));
+      const row = document.createElement("div");
+      row.className = "list-item";
+      const left = document.createElement("code");
+      left.textContent = id;
+      const acts = document.createElement("div");
+      acts.className = "acts";
+
+      const viewBtn = document.createElement("button");
+      viewBtn.className = "btn secondary mini";
+      viewBtn.textContent = "查看";
+      viewBtn.onclick = () => {
+        $("getId").value = id;
+        switchTab("get");
+        doGet();
+      };
+
+      const delBtn = document.createElement("button");
+      delBtn.className = "btn danger mini";
+      delBtn.textContent = "刪除";
+      delBtn.onclick = () => {
+        $("delId").value = id;
+        switchTab("delete");
+      };
+
+      acts.appendChild(viewBtn);
+      acts.appendChild(delBtn);
+      row.appendChild(left);
+      row.appendChild(acts);
+      resultEl.appendChild(row);
+    }
+  }
+
+  // ── Actions ─────────────────────────────────────────────
+  async function doList(targetStatus) {
+    const target = targetStatus || "listStatus";
+    const btns = [$("btnList"), $("btnVerify")];
+    btns.forEach((b) => b && (b.disabled = true));
+    const result = await apiRequest("GET", "/api/email/template", null, false);
+    btns.forEach((b) => b && (b.disabled = false));
+
+    if (result.error === "creds") {
+      renderStatus(target, { kind: "err", headline: "缺少憑證", extra: "❌ " + result.msg });
+      $("listResult").innerHTML = "";
+      return;
+    }
+    renderStatus(target, result);
+    renderList(result);
+  }
+
+  async function doGet() {
+    const id = $("getId").value.trim();
+    const idErr = validateTemplateId(id);
+    if (idErr) { renderStatus("getStatus", { kind: "err", headline: "參數錯誤", extra: "❌ " + idErr }); return; }
+    $("btnGet").disabled = true;
+    const result = await apiRequest("GET", "/api/email/template/" + encodeURIComponent(id), null, false);
+    $("btnGet").disabled = false;
+    if (result.error === "creds") { renderStatus("getStatus", { kind: "err", headline: "缺少憑證", extra: "❌ " + result.msg }); return; }
+    renderStatus("getStatus", result);
+  }
+
+  async function doDelete() {
+    const id = $("delId").value.trim();
+    const idErr = validateTemplateId(id);
+    if (idErr) { renderStatus("deleteStatus", { kind: "err", headline: "參數錯誤", extra: "❌ " + idErr }); return; }
+    if (!confirm("確定要刪除 Template「" + id + "」嗎？此動作無法復原。")) return;
+    $("btnDelete").disabled = true;
+    const result = await apiRequest("DELETE", "/api/email/template/" + encodeURIComponent(id), null, true);
+    $("btnDelete").disabled = false;
+    if (result.error === "creds") { renderStatus("deleteStatus", { kind: "err", headline: "缺少憑證", extra: "❌ " + result.msg }); return; }
+    renderStatus("deleteStatus", result);
+  }
+
+  async function doUpload() {
+    const built = buildUploadPayload();
+    if (built.error) { renderStatus("uploadStatus", { kind: "err", headline: "無法上傳", extra: "❌ " + built.error }); return; }
+    renderParsePreview(parseTemplate($("upHtml").value));
+    $("btnUpload").disabled = true;
+    const result = await apiRequest("POST", "/api/email/template", built.payload, true);
+    $("btnUpload").disabled = false;
+    if (result.error === "creds") { renderStatus("uploadStatus", { kind: "err", headline: "缺少憑證", extra: "❌ " + result.msg }); return; }
+    renderStatus("uploadStatus", result);
+  }
+
+  // ── Tabs ────────────────────────────────────────────────
+  function switchTab(name) {
+    document.querySelectorAll(".tab").forEach((t) =>
+      t.classList.toggle("active", t.dataset.tab === name));
+    document.querySelectorAll(".panel").forEach((p) =>
+      p.classList.toggle("active", p.id === "panel-" + name));
+  }
+
+  // ── Wiring ──────────────────────────────────────────────
+  document.querySelectorAll(".tab").forEach((t) =>
+    t.addEventListener("click", () => switchTab(t.dataset.tab)));
+
+  $("btnVerify").addEventListener("click", () => { switchTab("list"); doList("listStatus"); });
+  $("btnList").addEventListener("click", () => doList("listStatus"));
+  $("btnGet").addEventListener("click", doGet);
+  $("btnDelete").addEventListener("click", doDelete);
+  $("btnUpload").addEventListener("click", doUpload);
+  $("btnParse").addEventListener("click", () => renderParsePreview(parseTemplate($("upHtml").value)));
+
+  $("btnClear").addEventListener("click", () => {
+    $("siteKey").value = "";
+    $("apiKey").value = "";
+    alert("已清除 SITE_KEY 與 API_KEY。");
+  });
+
+  $("showSite").addEventListener("change", (e) => {
+    $("siteKey").type = e.target.checked ? "text" : "password";
+  });
+  $("showApi").addEventListener("change", (e) => {
+    $("apiKey").type = e.target.checked ? "text" : "password";
+  });
+
+  // File input + drag & drop
+  const drop = $("drop"), fileInput = $("fileInput");
+  function loadFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      $("upHtml").value = reader.result;
+      if (!$("upId").value.trim()) {
+        const base = file.name.replace(/\.[^.]+$/, "");
+        if (/^[A-Za-z0-9._-]+$/.test(base)) $("upId").value = base;
+      }
+      renderParsePreview(parseTemplate($("upHtml").value));
+    };
+    reader.readAsText(file);
+  }
+  drop.addEventListener("click", () => fileInput.click());
+  fileInput.addEventListener("change", (e) => loadFile(e.target.files[0]));
+  drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("drag"); });
+  drop.addEventListener("dragleave", () => drop.classList.remove("drag"));
+  drop.addEventListener("drop", (e) => {
+    e.preventDefault();
+    drop.classList.remove("drag");
+    if (e.dataTransfer.files.length) loadFile(e.dataTransfer.files[0]);
+  });
+})();
+</script>
+</body>
+</html>
